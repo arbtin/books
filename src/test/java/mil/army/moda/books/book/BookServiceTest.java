@@ -15,7 +15,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class BookServiceTest {
     @Mock
-    BookRepository bookRepository;
+    private BookRepository bookRepository;
 
     @InjectMocks
     BookService bookService;
@@ -32,6 +32,19 @@ class BookServiceTest {
         // Assert
         assertThat(result.getId()).isEqualTo(1L);
         verify(bookRepository).save(book);
+    }
+
+    // ALTERNATE testing example
+    @Test
+    void shouldSaveBookAndTestAnotherWay() {
+        // Arrange
+        Book savedBook = new Book("Hobbit", "Tokin", true, 800, "123-L3045-34", 15);
+        when(bookRepository.save(savedBook)).thenReturn(savedBook);
+        // Act
+        Book actualBook  = bookService.saveBook(savedBook); //<- this throws a Mockito warning
+        // Assert
+        verify (bookRepository, only()).save(savedBook);
+        assertThat(actualBook).isEqualTo(savedBook);
     }
 
     @Test
@@ -63,7 +76,7 @@ class BookServiceTest {
         // Assert
         assertThat(updatedBook.getAuthor()).isEqualTo("JRR Tolkin");
 
-        verify(bookRepository, only()).findById(updatedBook.getId());
+        verify(bookRepository).findById(updatedBook.getId());
     }
     @Test
     void shouldUpdateTodoStatusSuccessfully() {
@@ -71,16 +84,15 @@ class BookServiceTest {
         Book existingBook = new Book("Lord of the Rings", "Tolkin", true, 800, "123-L3045-55", 24);
         existingBook.setId(testId);
 
-
         Book updatedAuthorAndIsCheckedOut = new Book("Lord of the Rings", "JRR Tolkin", false, 1000, "123-L3045-55", 24);
         updatedAuthorAndIsCheckedOut.setId(testId);
-        Book updatedIsCheckedOut = new Book("Lord of the Rings", "JRR Tolkin", false, 1000, "123-L3045-55", 24);
-        updatedIsCheckedOut.setId(testId);
+//        Book updatedIsCheckedOut = new Book("Lord of the Rings", "JRR Tolkin", false, 1000, "123-L3045-55", 24);
+//        updatedIsCheckedOut.setId(testId);
 
         when(bookRepository.findById(testId)).thenReturn(Optional.of(existingBook));
-        when(bookRepository.save(any(Book.class))).thenReturn(updatedAuthorAndIsCheckedOut);
+        when(bookRepository.save(existingBook)).thenReturn(updatedAuthorAndIsCheckedOut);
 
-        Book updatedRequest = bookService.updateBook(updatedIsCheckedOut);
+        Book updatedRequest = bookService.updateBook(updatedAuthorAndIsCheckedOut);
 
         assertNotNull(updatedRequest);
         assertEquals(testId, updatedRequest.getId());
@@ -89,6 +101,7 @@ class BookServiceTest {
 
         verify(bookRepository).findById(testId);
         verify(bookRepository).save(existingBook);
+        verifyNoMoreInteractions(bookRepository);
     }
 
 }
